@@ -23,7 +23,8 @@ import {
   ExpandMore,
   PersonAdd as PersonAddIcon,
   Brightness4,
-  Brightness7
+  Brightness7,
+  Visibility as VisibilityIcon
 } from '@mui/icons-material';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -129,6 +130,13 @@ const Layout = () => {
       path: '/commands',
       requiredRole: ['Admin', 'Supervisor', 'TeamLead', 'Operator'],
       requiredPermission: 'view_commands'
+    },
+    {
+      text: 'Phiên hoạt động',
+      icon: <VisibilityIcon />,
+      path: '/sessions',
+      requiredRole: ['Admin', 'Supervisor'],
+      requiredPermission: 'view_sessions'
     }
   ];
 

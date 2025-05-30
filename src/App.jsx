@@ -1,25 +1,27 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { CssBaseline } from '@mui/material';
+import { QueryClient, QueryClientProvider } from 'react-query'; // Changed from @tanstack/react-query
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
 
-// Pages
+// Import your pages
 import LoginPage from './pages/LoginPage';
+import RequestPasswordResetPage from './pages/RequestPasswordResetPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
+import ProfilePage from './pages/ProfilePage';
 import DevicesPage from './pages/DevicesPage';
 import DeviceGroupsPage from './pages/DeviceGroupsPage';
 import CommandsPage from './pages/CommandsPage';
-import UsersPage from './pages/UsersPage';
 import ProfilesPage from './pages/ProfilesPage';
 import ProfileCommandsPage from './pages/ProfileCommandsPage';
 import ProfileOperatorsPage from './pages/ProfileOperatorsPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import RequestPasswordResetPage from './pages/RequestPasswordResetPage';
+import UsersPage from './pages/UsersPage';
 import NotFoundPage from './pages/NotFoundPage';
-import ProfilePage from './pages/ProfilePage';
-// Context and hooks
+import ActiveSessionsPage from './pages/ActiveSessionsPage';
+
+// Import components
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/common/PrivateRoute';
 import Layout from './components/common/Layout';
@@ -42,22 +44,22 @@ function App() {
         <AuthProvider>
           <Router>
             <Routes>
-              {/* Các route công khai */}
+              {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/reset-password-request" element={<RequestPasswordResetPage />} />
               <Route path="/page/reset-password" element={<ResetPasswordPage />} />
               
-              {/* Các route có layout và yêu cầu xác thực */}
+              {/* Private routes with layout */}
               <Route element={<PrivateRoute />}>
                 <Route element={<Layout />}>
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   
-                  {/* Routes với kiểm tra quyền */}
+                  {/* Role-based routes */}
                   <Route path="/devices" element={
                     <RoleRoute 
-                      allowedRoles={['Admin', 'Supervisor', 'TeamLead', 'Operator']} 
+                      allowedRoles={['Admin', 'Supervisor', 'TeamLead']} 
                       requiredPermissions={['view_devices']}
                     >
                       <DevicesPage />
@@ -79,15 +81,6 @@ function App() {
                       requiredPermissions={['view_commands']}
                     >
                       <CommandsPage />
-                    </RoleRoute>
-                  } />
-                  
-                  <Route path="/users" element={
-                    <RoleRoute 
-                      allowedRoles={['Admin']} 
-                      requiredPermissions={['manage_users']}
-                    >
-                      <UsersPage />
                     </RoleRoute>
                   } />
                   
@@ -115,6 +108,24 @@ function App() {
                       requiredPermissions={['assign_profiles']}
                     >
                       <ProfileOperatorsPage />
+                    </RoleRoute>
+                  } />
+                  
+                  <Route path="/users" element={
+                    <RoleRoute 
+                      allowedRoles={['Admin']} 
+                      requiredPermissions={['manage_users']}
+                    >
+                      <UsersPage />
+                    </RoleRoute>
+                  } />
+                  
+                  <Route path="/sessions" element={
+                    <RoleRoute 
+                      allowedRoles={['Admin', 'Supervisor']} 
+                      requiredPermissions={['view_sessions']}
+                    >
+                      <ActiveSessionsPage />
                     </RoleRoute>
                   } />
                 </Route>
