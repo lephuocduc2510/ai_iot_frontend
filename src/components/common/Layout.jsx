@@ -166,7 +166,7 @@ const Layout = () => {
       requiredPermission: 'view_profiles'
     },
     {
-      text: 'Lệnh hồ sơ',
+      text: 'Tạo hồ sơ',
       icon: <CodeIcon />,
       path: '/profile-commands',
       requiredRole: ['TeamLead'], // Loại bỏ Admin
