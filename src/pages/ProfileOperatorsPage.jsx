@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import {
   Box,
@@ -11,10 +11,6 @@ import {
   Autocomplete,
   TextField,
   Divider,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   IconButton,
   Chip,
   Dialog,
@@ -28,18 +24,18 @@ import {
   TableHead,
   TableRow
 } from '@mui/material';
-import { 
+import {
   PersonAdd as PersonAddIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon
 } from '@mui/icons-material';
-import { 
-  getProfiles, 
-  createProfileOperator, 
-  getProfileOperatorByOperatorId, 
-  deleteProfileOperator 
+import {
+  getProfiles,
+  createProfileOperator,
+  getProfileOperatorByOperatorId,
+  deleteProfileOperator
 } from '../api/profileApi';
-import { getUsers } from '../api/authApi';
+import axiosInstance from '../api/axiosConfig';
 import { useAuth } from '../hooks/useAuth';
 
 const ProfileOperatorsPage = () => {
@@ -53,17 +49,45 @@ const ProfileOperatorsPage = () => {
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const [assignmentToDelete, setAssignmentToDelete] = useState(null);
 
-  // Fetch profiles and users
-  const { data: profiles = [], isLoading: profilesLoading } = useQuery('profiles', getProfiles);
-  const { 
-    data: users = [], 
-    isLoading: usersLoading 
-  } = useQuery('users', () => getUsers().then(data => 
-    data.filter(user => user.role === 'Operator' && user.is_active)
-  ));
+  // Lấy danh sách người dùng có role là Operator
+  // Lấy danh sách người dùng có role là Operator
+  const {
+    data: operators = [],
+    isLoading: operatorsLoading,
+    error: operatorsError
+  } = useQuery('operators', async () => {
+    try {
+      // Sử dụng endpoint "/users" từ users.py
+      const response = await axiosInstance.get('/users');
+      console.log('Fetched operators:', response.data);
+      // Lọc chỉ lấy người dùng có role là "Operator"
+      return response.data.filter(user => user.role === 'Operator');
+    } catch (error) {
+      console.error('Error fetching operators:', error);
+      throw error;
+    }
+  });
 
+  // Lấy danh sách tất cả profiles
+  const {
+    data: profiles = [],
+    isLoading: profilesLoading,
+    error: profilesError,
+    refetch: refetchProfiles  // Thêm refetch cho profiles
+  } = useQuery('profiles', async () => {
+    try {
+      // Sử dụng endpoint "/profiles" từ profiles.py
+      console.log('Fetching profiles...');
+      const response = await axiosInstance.get('/profiles');
+      console.log('Profiles response:', response.data);
+      return response.data.filter(profile => profile.is_active !== false);
+    } catch (error) {
+      console.error('Error fetching profiles:', error);
+      throw error;
+    }
+  });
   // Fetch operator profiles when operator is selected
-  const { 
+  const {
     refetch: fetchOperatorProfiles,
     isLoading: operatorProfilesLoading
   } = useQuery(
@@ -72,15 +96,29 @@ const ProfileOperatorsPage = () => {
     {
       enabled: !!selectedOperator?.id,
       onSuccess: (data) => {
-        if (data && data.profiles) {
-          setOperatorProfiles(Array.isArray(data.profiles) ? data.profiles : []);
+        console.log('Profile operator data received:', data);
+        if (data && Array.isArray(data.profile_id)) {
+          // Lấy thông tin chi tiết của các profile từ danh sách profiles đã tải
+          const profileDetails = profiles.filter(profile =>
+            data.profile_id.includes(profile.id)
+          );
+
+          console.log('Mapped profile details:', profileDetails);
+          setOperatorProfiles(profileDetails);
         } else {
           setOperatorProfiles([]);
         }
       },
       onError: (error) => {
         console.error('Error fetching operator profiles:', error);
-        setOperatorProfiles([]);
+        if (error.response && error.response.status === 404) {
+          // Nếu 404, nghĩa là người vận hành chưa có hồ sơ nào
+          setOperatorProfiles([]);
+        } else {
+          setError('Lỗi khi tải danh sách hồ sơ của người vận hành này');
+          setTimeout(() => setError(''), 5000);
+          setOperatorProfiles([]);
+        }
       }
     }
   );
@@ -101,8 +139,8 @@ const ProfileOperatorsPage = () => {
       console.error('Error assigning profiles to operator:', error);
       let errorMessage = 'Đã xảy ra lỗi khi gán hồ sơ cho người vận hành';
       if (error.response?.data?.detail) {
-        errorMessage = typeof error.response.data.detail === 'string' 
-          ? error.response.data.detail 
+        errorMessage = typeof error.response.data.detail === 'string'
+          ? error.response.data.detail
           : JSON.stringify(error.response.data.detail);
       }
       setError(errorMessage);
@@ -126,20 +164,28 @@ const ProfileOperatorsPage = () => {
       console.error('Error removing profile assignment:', error);
       let errorMessage = 'Đã xảy ra lỗi khi hủy gán hồ sơ';
       if (error.response?.data?.detail) {
-        errorMessage = typeof error.response.data.detail === 'string' 
-          ? error.response.data.detail 
+        errorMessage = typeof error.response.data.detail === 'string'
+          ? error.response.data.detail
           : JSON.stringify(error.response.data.detail);
       }
-      alert(`Lỗi: ${errorMessage}`);
+      setError(errorMessage);
       setDeleteConfirmDialog(false);
+      setTimeout(() => setError(''), 5000);
     }
   });
 
+  // Cập nhật hàm handleOperatorChange để tải mới danh sách hồ sơ
   const handleOperatorChange = (event, newValue) => {
     setSelectedOperator(newValue);
     setSelectedProfiles([]);
+
     if (newValue?.id) {
+      // Tải các hồ sơ đã gán
       fetchOperatorProfiles();
+
+      // Đồng thời tải mới danh sách tất cả hồ sơ
+      console.log('Operator selected, refreshing profiles list');
+      refetchProfiles(); // Gọi lại API để cập nhật danh sách hồ sơ
     } else {
       setOperatorProfiles([]);
     }
@@ -180,41 +226,78 @@ const ProfileOperatorsPage = () => {
     }
   };
 
-  const isAdmin = currentUser?.role === 'Admin';
+  // Kiểm tra quyền quản lý - Admin, Supervisor hoặc TeamLead
+  const canManageAssignments = currentUser &&
+    ['Admin', 'Supervisor', 'TeamLead'].includes(currentUser.role);
+
+  useEffect(() => {
+    // Hiển thị lỗi nếu không load được operators hoặc profiles
+    if (operatorsError) {
+      setError('Không thể tải danh sách người vận hành. Vui lòng thử lại.');
+    } else if (profilesError) {
+      setError('Không thể tải danh sách hồ sơ. Vui lòng thử lại.');
+    }
+  }, [operatorsError, profilesError]);
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h1" sx={{ mb: 3 }}>
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{
+          mb: 4,
+          fontWeight: 'bold',
+          borderLeft: '4px solid #1976d2',
+          pl: 2
+        }}
+      >
         Gán hồ sơ cho người vận hành
       </Typography>
 
+      {!canManageAssignments && (
+        <Alert
+          severity="warning"
+          sx={{
+            mb: 4,
+            py: 1.5,
+            borderRadius: 2,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+          }}
+        >
+          Bạn không có quyền quản lý việc gán hồ sơ. Chỉ Admin, Supervisor và TeamLead mới có quyền này.
+        </Alert>
+      )}
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{ p: 4, borderRadius: 2, boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)' }}>
             {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
             {success && <Alert severity="success" sx={{ mb: 3 }}>{success}</Alert>}
 
-            <Typography variant="h6" sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ mb: 3, fontWeight: 'medium', color: 'primary.main' }}>
               Chọn người vận hành
             </Typography>
 
             <Autocomplete
-              options={users}
-              getOptionLabel={(option) => `${option.username} (${option.email})`}
+              options={operators}
+              getOptionLabel={(option) => `${option.username} (${option.email || 'Không có email'})`}
               onChange={handleOperatorChange}
               value={selectedOperator}
-              loading={usersLoading}
+              loading={operatorsLoading}
+              disabled={!canManageAssignments}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   label="Chọn người vận hành"
                   fullWidth
                   required
+                  sx={{ mb: 2 }}
                   InputProps={{
                     ...params.InputProps,
+                    sx: { borderRadius: 1 },
                     endAdornment: (
                       <>
-                        {usersLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {operatorsLoading ? <CircularProgress color="inherit" size={20} /> : null}
                         {params.InputProps.endAdornment}
                       </>
                     ),
@@ -223,17 +306,17 @@ const ProfileOperatorsPage = () => {
               )}
             />
 
-            {isAdmin && selectedOperator && (
+            {canManageAssignments && selectedOperator && (
               <Box sx={{ mt: 4 }}>
                 <Divider sx={{ mb: 3 }} />
-                <Typography variant="h6" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 'medium', color: 'primary.main' }}>
                   Gán hồ sơ mới
                 </Typography>
 
                 <Autocomplete
                   multiple
-                  options={profiles.filter(p => p.is_active)}
-                  getOptionLabel={(option) => option.name}
+                  options={profiles}
+                  getOptionLabel={(option) => `${option.name} (ID: ${option.id})`}
                   value={selectedProfiles}
                   onChange={handleProfileChange}
                   loading={profilesLoading}
@@ -244,6 +327,7 @@ const ProfileOperatorsPage = () => {
                       fullWidth
                       InputProps={{
                         ...params.InputProps,
+                        sx: { borderRadius: 1 },
                         endAdornment: (
                           <>
                             {profilesLoading ? <CircularProgress color="inherit" size={20} /> : null}
@@ -271,6 +355,12 @@ const ProfileOperatorsPage = () => {
                     startIcon={<PersonAddIcon />}
                     onClick={handleSubmit}
                     disabled={!selectedOperator || selectedProfiles.length === 0 || createProfileOperatorMutation.isLoading}
+                    sx={{
+                      borderRadius: 1,
+                      py: 1,
+                      px: 3,
+                      boxShadow: '0px 3px 10px rgba(25, 118, 210, 0.2)'
+                    }}
                   >
                     {createProfileOperatorMutation.isLoading ? <CircularProgress size={24} /> : 'Gán hồ sơ'}
                   </Button>
@@ -281,12 +371,12 @@ const ProfileOperatorsPage = () => {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">
+          <Paper sx={{ p: 4, borderRadius: 2, boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.1)', height: '100%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 'medium', color: 'primary.main' }}>
                 Hồ sơ đã gán
               </Typography>
-              
+
               {selectedOperator && (
                 <Button
                   variant="outlined"
@@ -294,6 +384,7 @@ const ProfileOperatorsPage = () => {
                   onClick={() => fetchOperatorProfiles()}
                   disabled={operatorProfilesLoading}
                   size="small"
+                  sx={{ borderRadius: 1 }}
                 >
                   Làm mới
                 </Button>
@@ -301,43 +392,56 @@ const ProfileOperatorsPage = () => {
             </Box>
 
             {!selectedOperator ? (
-              <Alert severity="info">Vui lòng chọn người vận hành để xem danh sách hồ sơ đã gán</Alert>
+              <Alert
+                severity="info"
+                sx={{
+                  borderRadius: 1,
+                  '& .MuiAlert-message': { p: 1 }
+                }}
+              >
+                Vui lòng chọn người vận hành để xem danh sách hồ sơ đã gán
+              </Alert>
             ) : operatorProfilesLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                 <CircularProgress />
               </Box>
             ) : operatorProfiles.length > 0 ? (
-              <TableContainer>
+              <TableContainer sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
                 <Table>
-                  <TableHead>
+                  <TableHead sx={{
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                  }}>
                     <TableRow>
                       <TableCell>ID</TableCell>
                       <TableCell>Tên hồ sơ</TableCell>
-                      <TableCell>Trạng thái</TableCell>
-                      {isAdmin && <TableCell align="right">Thao tác</TableCell>}
+                      <TableCell>Mô tả</TableCell>
+                      {canManageAssignments && <TableCell align="right">Thao tác</TableCell>}
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {operatorProfiles.map((profile) => (
-                      <TableRow key={profile.id}>
+                      <TableRow
+                        key={profile.id}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: (theme) =>
+                              theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                          }
+                        }}
+                      >
                         <TableCell>{profile.id}</TableCell>
                         <TableCell>{profile.name}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={profile.is_active ? 'Hoạt động' : 'Vô hiệu'}
-                            color={profile.is_active ? 'success' : 'default'}
-                            variant="outlined"
-                            size="small"
-                          />
-                        </TableCell>
-                        {isAdmin && (
+                        <TableCell>{profile.description?.substring(0, 50) || '-'}</TableCell>
+                        {canManageAssignments && (
                           <TableCell align="right">
-                            <IconButton 
-                              color="error" 
+                            <IconButton
+                              color="error"
                               onClick={() => handleDeleteAssignment({
                                 profile_id: profile.id,
                                 assignment_id: profile.assignment_id
                               })}
+                              sx={{ '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.04)' } }}
                             >
                               <DeleteIcon />
                             </IconButton>
@@ -349,32 +453,61 @@ const ProfileOperatorsPage = () => {
                 </Table>
               </TableContainer>
             ) : (
-              <Alert severity="info">Người vận hành này chưa được gán hồ sơ nào</Alert>
+              <Alert
+                severity="info"
+                sx={{
+                  borderRadius: 1,
+                  '& .MuiAlert-message': { p: 1 }
+                }}
+              >
+                Người vận hành này chưa được gán cho hồ sơ nào
+              </Alert>
             )}
           </Paper>
         </Grid>
       </Grid>
 
       {/* Dialog xác nhận hủy gán hồ sơ */}
-      <Dialog open={deleteConfirmDialog} onClose={() => setDeleteConfirmDialog(false)}>
-        <DialogTitle>Xác nhận hủy gán</DialogTitle>
-        <DialogContent>
+      <Dialog
+        open={deleteConfirmDialog}
+        onClose={() => setDeleteConfirmDialog(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold', pb: 1 }}>
+          Xác nhận hủy gán
+        </DialogTitle>
+        <DialogContent sx={{ minWidth: '400px' }}>
           <Typography>
             Bạn có chắc chắn muốn hủy gán hồ sơ này khỏi người vận hành không?
           </Typography>
-          <Typography color="error" sx={{ mt: 2 }}>
+          <Typography color="error" sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
+            <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
             Hành động này không thể hoàn tác.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmDialog(false)} color="inherit">
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            onClick={() => setDeleteConfirmDialog(false)}
+            color="inherit"
+            variant="outlined"
+            sx={{ borderRadius: 1 }}
+          >
             Hủy
           </Button>
-          <Button 
-            onClick={confirmDeleteAssignment} 
-            color="error" 
+          <Button
+            onClick={confirmDeleteAssignment}
+            color="error"
             variant="contained"
             disabled={deleteProfileOperatorMutation.isLoading}
+            sx={{
+              borderRadius: 1,
+              boxShadow: '0 4px 10px rgba(211, 47, 47, 0.3)'
+            }}
           >
             {deleteProfileOperatorMutation.isLoading ? <CircularProgress size={24} /> : 'Xác nhận hủy gán'}
           </Button>

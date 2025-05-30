@@ -51,10 +51,11 @@ export const deleteProfile = async (profileId) => {
   }
 };
 
-// API quản lý Profile Commands
+// API quản lý Profile Commands - Cập nhật theo profile_commands.py
 export const getProfileCommands = async (profileId) => {
   try {
-    const response = await axiosInstance.get(`/profile-commands/profile/${profileId}`);
+    // Giữ nguyên endpoint này vì có thể được định nghĩa ở router profiles
+    const response = await axiosInstance.get(`/profiles/${profileId}/commands`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching commands for profile ${profileId}:`, error);
@@ -64,7 +65,8 @@ export const getProfileCommands = async (profileId) => {
 
 export const addProfileCommand = async (commandData) => {
   try {
-    const response = await axiosInstance.post('/profile-commands', commandData);
+    // Cập nhật theo router prefix trong profile_commands.py
+    const response = await axiosInstance.post('/profile-command', commandData);
     return response.data;
   } catch (error) {
     console.error('Error adding command to profile:', error);
@@ -74,7 +76,8 @@ export const addProfileCommand = async (commandData) => {
 
 export const deleteProfileCommand = async (commandId) => {
   try {
-    const response = await axiosInstance.delete(`/profile-commands/${commandId}`);
+    // Cập nhật theo router prefix trong profile_commands.py
+    const response = await axiosInstance.delete(`/profile-command/${commandId}`);
     return response.data;
   } catch (error) {
     console.error(`Error deleting command ${commandId}:`, error);
@@ -82,10 +85,11 @@ export const deleteProfileCommand = async (commandId) => {
   }
 };
 
-// API quản lý Profile Operators
+// API quản lý Profile Operators - Cập nhật theo profile_operators.py
 export const getProfileOperators = async () => {
   try {
-    const response = await axiosInstance.get('/profile-operators');
+    // Cập nhật theo router prefix trong profile_operators.py
+    const response = await axiosInstance.get('/profile_operators');
     return response.data;
   } catch (error) {
     console.error('Error fetching profile operators:', error);
@@ -93,19 +97,30 @@ export const getProfileOperators = async () => {
   }
 };
 
+// Cập nhật hàm getProfileOperatorByOperatorId
 export const getProfileOperatorByOperatorId = async (operatorId) => {
   try {
-    const response = await axiosInstance.get(`/profile-operators/operator/${operatorId}`);
+    // Sửa URL thành /profile_operators/{operatorId}
+    const response = await axiosInstance.get(`/profile_operators/${operatorId}`);
+    console.log('API response for getProfileOperatorByOperatorId:', response.data);
     return response.data;
   } catch (error) {
-    console.error(`Error fetching profiles for operator ${operatorId}:`, error);
+    if (error.response && error.response.status === 404) {
+      // Trả về một đối tượng trống nếu không tìm thấy
+      return { 
+        operator_id: operatorId,
+        profile_id: []
+      };
+    }
     throw error;
   }
 };
 
 export const getProfileOperatorByProfileId = async (profileId) => {
   try {
-    const response = await axiosInstance.get(`/profile-operators/profile/${profileId}`);
+    // Giả định từ cấu trúc API nhưng không có trong file profile_operators.py
+    // Có thể cần kiểm tra endpoint chính xác
+    const response = await axiosInstance.get(`/profile_operators/profile/${profileId}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching operators for profile ${profileId}:`, error);
@@ -113,19 +128,27 @@ export const getProfileOperatorByProfileId = async (profileId) => {
   }
 };
 
-export const createProfileOperator = async (profileOperatorData) => {
+// Cập nhật hàm createProfileOperator
+export const createProfileOperator = async (data) => {
   try {
-    const response = await axiosInstance.post('/profile-operators', profileOperatorData);
+    const profileOperatorData = {
+      operator_id: data.operator_id,
+      profile_id: data.profile_ids // Lưu ý rằng backend mong đợi 'profile_id' không phải 'profile_ids'
+    };
+
+    console.log('Sending profile operator data:', profileOperatorData);
+    const response = await axiosInstance.post('/profile_operators', profileOperatorData);
     return response.data;
   } catch (error) {
-    console.error('Error creating profile operator assignment:', error);
+    console.error('Error creating profile operator:', error);
     throw error;
   }
 };
 
 export const deleteProfileOperator = async (assignmentId) => {
   try {
-    const response = await axiosInstance.delete(`/profile-operators/${assignmentId}`);
+    // Cập nhật để phù hợp với prefix router trong profile_operators.py
+    const response = await axiosInstance.delete(`/profile_operators/${assignmentId}`);
     return response.data;
   } catch (error) {
     console.error(`Error deleting profile operator assignment ${assignmentId}:`, error);
