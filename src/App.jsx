@@ -20,6 +20,7 @@ import ProfileOperatorsPage from './pages/ProfileOperatorsPage';
 import UsersPage from './pages/UsersPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ActiveSessionsPage from './pages/ActiveSessionsPage';
+import SessionHistoryPage from './pages/SessionHistoryPage';
 
 // Import components
 import { AuthProvider } from './context/AuthContext';
@@ -126,6 +127,15 @@ function App() {
                       requiredPermissions={['view_sessions']}
                     >
                       <ActiveSessionsPage />
+                    </RoleRoute>
+                  } />
+                  
+                  <Route path="/session-history" element={
+                    <RoleRoute 
+                      allowedRoles={['Admin', 'Supervisor']} 
+                      requiredPermissions={['view_sessions']}
+                    >
+                      <SessionHistoryPage />
                     </RoleRoute>
                   } />
                 </Route>
