@@ -15,7 +15,6 @@ import DevicesPage from './pages/DevicesPage';
 import DeviceGroupsPage from './pages/DeviceGroupsPage';
 import CommandsPage from './pages/CommandsPage';
 import ProfilesPage from './pages/ProfilesPage';
-import ProfileCommandsPage from './pages/ProfileCommandsPage';
 import ProfileOperatorsPage from './pages/ProfileOperatorsPage';
 import UsersPage from './pages/UsersPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -27,6 +26,8 @@ import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/common/PrivateRoute';
 import Layout from './components/common/Layout';
 import RoleRoute from './components/common/RoleRoute';
+import DevicesOpePage from './pages/DevicesOperator';
+import ProfileCommandsPage from './pages/ProfileCommandsPage';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -64,6 +65,17 @@ function App() {
                       requiredPermissions={['view_devices']}
                     >
                       <DevicesPage />
+                    </RoleRoute>
+                  } />
+
+                  
+
+                    <Route path="/devices-operator" element={
+                    <RoleRoute 
+                      allowedRoles={['Admin', 'Supervisor', 'TeamLead', 'Operator']} 
+                      requiredPermissions={['view_devices']}
+                    >
+                      <DevicesOpePage />
                     </RoleRoute>
                   } />
                   

@@ -52,6 +52,17 @@ const CommandsPage = () => {
   const { data: devices = [] } = useQuery('devices', getAllDevices);
   const { data: deviceGroups = [] } = useQuery('deviceGroups', getAllDeviceGroups);
 
+
+  // Thêm useEffect để cập nhật target_id khi deviceGroups được tải
+  React.useEffect(() => {
+    if (dialogMode === 'add' && deviceGroups.length > 0 && formData.command_type === 'group' && !formData.target_id) {
+      setFormData(prev => ({
+        ...prev,
+        target_id: deviceGroups[0].id
+      }));
+    }
+  }, [deviceGroups, dialogMode, formData.command_type, formData.target_id]);
+
   const createMutation = useMutation(createCommand, {
     onSuccess: () => {
       queryClient.invalidateQueries('commands');
@@ -116,8 +127,8 @@ const CommandsPage = () => {
     setDialogMode('add');
     setFormData({
       description: '',
-      command_type: 'single',
-      target_id: '',
+      command_type: 'group', // Mặc định là nhóm thiết bị thay vì 'single'
+      target_id: deviceGroups.length > 0 ? deviceGroups[0].id : '', // Chọn mặc định nhóm thiết bị đầu tiên
       command: '',
       parameters: '',
       scheduled_time: null
@@ -383,94 +394,9 @@ const CommandsPage = () => {
         <DialogContent sx={{ pt: 3 }}>
           {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-          {/* Đã xóa TextField cho tên lệnh */}
-
-          <TextField
-            margin="dense"
-            name="description"
-            label="Mô tả"
-            type="text"
-            fullWidth
-            variant="outlined"
-            multiline
-            rows={2}
-            value={formData.description}
-            onChange={handleInputChange}
-            sx={{ mb: 3 }}
-            disabled={dialogMode === 'edit'} // Chỉ cập nhật lệnh, không cập nhật mô tả
-          />
-
+          {/* Phần nội dung lệnh được chuyển lên trên */}
           <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary">
-              Mục tiêu
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Loại mục tiêu</InputLabel>
-                  <Select
-                    name="command_type"
-                    value={formData.command_type}
-                    label="Loại mục tiêu"
-                    onChange={handleInputChange}
-                    disabled={dialogMode === 'edit'} // Chỉ cập nhật lệnh, không cập nhật loại mục tiêu
-                    sx={{ borderRadius: 1 }}
-                  >
-                    <MenuItem value="single">Thiết bị</MenuItem>
-                    <MenuItem value="group">Nhóm thiết bị</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Mục tiêu</InputLabel>
-                  <Select
-                    name="target_id"
-                    value={formData.target_id}
-                    label="Mục tiêu"
-                    onChange={handleInputChange}
-                    disabled={dialogMode === 'edit'} // Chỉ cập nhật lệnh, không cập nhật mục tiêu
-                    displayEmpty
-                    sx={{
-                      borderRadius: 1,
-                      "& .MuiSelect-select": {
-                        color: formData.target_id ? 'inherit' : 'text.secondary'
-                      }
-                    }}
-                    // renderValue={(selected) => {
-                    //   if (!selected) {
-                    //     return <em style={{ opacity: 0.7 }}>Mục tiêu</em>;
-                    //   }
-
-                    //   const targetName = formData.command_type === 'single'
-                    //     ? devices.find(d => d.id === selected)?.hostname
-                    //     : deviceGroups.find(g => g.id === selected)?.name;
-
-                    //   return targetName || selected;
-                    // }}
-                  >
-                    <MenuItem value="" disabled>
-                      <em>Chọn mục tiêu</em>
-                    </MenuItem>
-
-                    {formData.command_type === 'single' ? (
-                      devices.map(device => (
-                        <MenuItem key={device.id} value={device.id}>{device.hostname}</MenuItem>
-                      ))
-                    ) : (
-                      deviceGroups.map(group => (
-                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
-                      ))
-                    )}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Box>
-
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary">
+            <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary" marginTop={3}>
               Nội dung lệnh
             </Typography>
             <TextField
@@ -501,6 +427,76 @@ const CommandsPage = () => {
                 sx: { borderRadius: 1 }
               }}
             />
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary">
+              Mục tiêu
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Loại mục tiêu</InputLabel>
+                  <Select
+                    name="command_type"
+                    value={formData.command_type}
+                    label="Loại mục tiêu"
+                    onChange={(e) => {
+                      // Khi thay đổi loại mục tiêu, tự động chọn phần tử đầu tiên của loại đó
+                      const newType = e.target.value;
+                      const newTargetId = newType === 'single'
+                        ? (devices.length > 0 ? devices[0].id : '')
+                        : (deviceGroups.length > 0 ? deviceGroups[0].id : '');
+
+                      setFormData({
+                        ...formData,
+                        command_type: newType,
+                        target_id: newTargetId
+                      });
+                    }}
+                    disabled={dialogMode === 'edit'} // Chỉ cập nhật lệnh, không cập nhật loại mục tiêu
+                    sx={{ borderRadius: 1 }}
+                  >
+                    <MenuItem value="single">Thiết bị</MenuItem>
+                    <MenuItem value="group">Nhóm thiết bị</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Mục tiêu</InputLabel>
+                  <Select
+                    name="target_id"
+                    value={formData.target_id}
+                    label="Mục tiêu"
+                    onChange={handleInputChange}
+                    disabled={dialogMode === 'edit'} // Chỉ cập nhật lệnh, không cập nhật mục tiêu
+                    displayEmpty
+                    sx={{
+                      borderRadius: 1,
+                      "& .MuiSelect-select": {
+                        color: formData.target_id ? 'inherit' : 'text.secondary'
+                      }
+                    }}
+                  >
+                    <MenuItem value="" disabled>
+                      <em>Chọn mục tiêu</em>
+                    </MenuItem>
+
+                    {formData.command_type === 'single' ? (
+                      devices.map(device => (
+                        <MenuItem key={device.id} value={device.id}>{device.hostname}</MenuItem>
+                      ))
+                    ) : (
+                      deviceGroups.map(group => (
+                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
           </Box>
 
           <Box>

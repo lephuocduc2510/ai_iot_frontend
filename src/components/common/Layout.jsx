@@ -103,33 +103,41 @@ const Layout = () => {
   };
 
   // Danh sách các mục menu chính
+  // Danh sách các mục menu chính
   const mainMenuItems = [
     {
       text: 'Tổng quan',
       icon: <DashboardIcon />,
       path: '/dashboard',
-      requiredRole: ['Admin', 'Supervisor', 'TeamLead', 'Operator'],
+      requiredRole: ['Admin', 'Supervisor', 'TeamLead', 'Operator'], // Loại bỏ Admin
       requiredPermission: null
     },
     {
       text: 'Thiết bị',
       icon: <DevicesIcon />,
       path: '/devices',
-      requiredRole: ['Admin', 'Supervisor', 'TeamLead', 'Operator'],
+      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredPermission: 'view_devices'
+    },
+    {
+      text: 'Thiết bị',
+      icon: <DevicesIcon />,
+      path: '/devices-operator',
+      requiredRole: ['Operator'], // Chỉ hiển thị cho Operator
       requiredPermission: 'view_devices'
     },
     {
       text: 'Nhóm thiết bị',
       icon: <GroupIcon />,
       path: '/device-groups',
-      requiredRole: ['Admin', 'Supervisor', 'TeamLead'],
+      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
       requiredPermission: 'view_device_groups'
     },
     {
       text: 'Lệnh điều khiển',
       icon: <CodeIcon />,
       path: '/commands',
-      requiredRole: ['Admin', 'Supervisor', 'TeamLead', 'Operator'],
+      requiredRole: ['Supervisor', 'TeamLead', 'Operator'], // Loại bỏ Admin
       requiredPermission: 'view_commands'
     },
     {
@@ -154,39 +162,39 @@ const Layout = () => {
       text: 'Quản lý hồ sơ',
       icon: <AssignmentIcon />,
       path: '/profiles',
-      requiredRole: ['Admin', 'Supervisor', 'TeamLead'],
+      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
       requiredPermission: 'view_profiles'
     },
     {
       text: 'Lệnh hồ sơ',
       icon: <CodeIcon />,
       path: '/profile-commands',
-      requiredRole: ['Admin', 'Supervisor', 'TeamLead'],
+      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
       requiredPermission: 'manage_profile_commands'
     },
     {
       text: 'Gán hồ sơ',
       icon: <PersonAddIcon />,
       path: '/profile-operators',
-      requiredRole: ['Admin', 'Supervisor', 'TeamLead'],
+      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
       requiredPermission: 'assign_profiles'
     }
   ];
 
-  // Các menu bổ sung
+  // Các menu bổ sung - Giữ quyền quản lý người dùng cho Admin
   const additionalMenuItems = [
     {
       text: 'Quản lý người dùng',
       icon: <PersonIcon />,
       path: '/users',
-      requiredRole: ['Admin'],
+      requiredRole: ['Admin'], // Chỉ Admin mới thấy menu này
       requiredPermission: 'manage_users'
     },
     {
       text: 'Cài đặt',
       icon: <SettingsIcon />,
       path: '/settings',
-      requiredRole: ['Admin', 'Supervisor', 'TeamLead', 'Operator'],
+      requiredRole: ['Admin', 'Supervisor', 'TeamLead', 'Operator'], // Giữ nguyên
       requiredPermission: null
     }
   ];
@@ -398,14 +406,14 @@ const Layout = () => {
             />
           </ListItemButton>
         </ListItem>
-        <ListItem disablePadding>
+        {/* <ListItem disablePadding>
           <ListItemButton onClick={handleResetPassword} sx={{ borderRadius: 1, mx: 1 }}>
             <ListItemIcon>
               <PasswordIcon />
             </ListItemIcon>
             <ListItemText primary="Đổi mật khẩu" />
           </ListItemButton>
-        </ListItem>
+        </ListItem> */}
         <ListItem disablePadding>
           <ListItemButton onClick={handleLogout} sx={{ borderRadius: 1, mx: 1 }}>
             <ListItemIcon>
