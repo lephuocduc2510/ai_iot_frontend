@@ -212,19 +212,6 @@ const CommandsPage = () => {
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'success':
-        return 'Thành công';
-      case 'failed':
-        return 'Thất bại';
-      case 'scheduled':
-        return 'Đã lên lịch';
-      default:
-        return 'Đang chờ';
-    }
-  };
-
   return (
     <>
       <Box sx={{ p: 3 }}>
@@ -270,7 +257,6 @@ const CommandsPage = () => {
                       <TableCell>Loại mục tiêu</TableCell>
                       <TableCell>Mục tiêu</TableCell>
                       <TableCell>Lệnh</TableCell>
-                      <TableCell>Trạng thái</TableCell>
                       <TableCell>Thời gian thực thi</TableCell>
                       <TableCell align="right">Thao tác</TableCell>
                     </TableRow>
@@ -296,21 +282,6 @@ const CommandsPage = () => {
                                 <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
                                   {command.command}
                                 </Typography>
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell>
-                              <Tooltip title={getStatusText(command.status)}>
-                                <Chip
-                                  icon={getStatusIcon(command.status)}
-                                  label={getStatusText(command.status)}
-                                  color={
-                                    command.status === 'success' ? 'success' :
-                                      command.status === 'failed' ? 'error' :
-                                        command.status === 'scheduled' ? 'info' : 'warning'
-                                  }
-                                  variant="outlined"
-                                  size="small"
-                                />
                               </Tooltip>
                             </TableCell>
                             <TableCell>

@@ -493,34 +493,6 @@ const DevicesPage = () => {
               </Grid>
             </Grid>
           </Box>
-
-          <Box>
-            <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary">
-              Phân nhóm
-            </Typography>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Nhóm thiết bị</InputLabel>
-                  <Select
-                    name="device_group_id"
-                    value={formData.device_group_id || ''}
-                    label="Nhóm thiết bị"
-                    onChange={handleInputChange}
-                    sx={{ borderRadius: 1 }}
-                  >
-                    <MenuItem value="">Không thuộc nhóm</MenuItem>
-                    {deviceGroups.map(group => (
-                      <MenuItem key={group.id} value={group.id}>
-                        {group.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <FormHelperText>Chọn nhóm thiết bị để phân loại và quản lý dễ dàng hơn</FormHelperText>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Box>
         </DialogContent>
 
         <DialogActions sx={{
