@@ -23,7 +23,9 @@ import {
   ExpandMore,
   PersonAdd as PersonAddIcon,
   Brightness4,
-  Brightness7
+  Brightness7,
+  Visibility as VisibilityIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -137,6 +139,20 @@ const Layout = () => {
       path: '/commands',
       requiredRole: ['Supervisor', 'TeamLead', 'Operator'], // Loại bỏ Admin
       requiredPermission: 'view_commands'
+    },
+    {
+      text: 'Phiên hoạt động',
+      icon: <VisibilityIcon />,
+      path: '/sessions',
+      requiredRole: ['Admin', 'Supervisor'],
+      requiredPermission: 'view_sessions'
+    },
+    {
+      text: 'Lịch sử phiên',
+      icon: <HistoryIcon />,
+      path: '/session-history',
+      requiredRole: ['Admin', 'Supervisor'],
+      requiredPermission: 'view_sessions'
     }
   ];
 
