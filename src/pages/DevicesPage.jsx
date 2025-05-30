@@ -35,7 +35,7 @@ const DevicesPage = () => {
     ip_address: '',
     status: 'active',
     device_group_id: null,
-    password: ''
+    ssh_port: ''
   });
   const [error, setError] = useState('');
 
@@ -134,7 +134,7 @@ const DevicesPage = () => {
       ip_address: '',
       status: 'active',
       device_group_id: null,
-      password: ''
+      ssh_port: ''
     });
     setOpenDialog(true);
     setError('');
@@ -149,7 +149,7 @@ const DevicesPage = () => {
       ip_address: device.ip_address || '',
       status: device.status || 'active',
       device_group_id: device.device_group_id || null,
-      password: '' // Không hiển thị mật khẩu cũ
+      ssh_port: device.ssh_port || ''
     });
     setOpenDialog(true);
     setError('');
@@ -277,6 +277,7 @@ const DevicesPage = () => {
                       <TableCell>Tên máy chủ</TableCell>
                       <TableCell>Hệ điều hành</TableCell>
                       <TableCell>Địa chỉ IP</TableCell>
+                      <TableCell>SSH Port</TableCell>
                       <TableCell>Nhóm thiết bị</TableCell>
                       <TableCell>Trạng thái</TableCell>
                       <TableCell>Ngày tạo</TableCell>
@@ -292,6 +293,7 @@ const DevicesPage = () => {
                           <TableCell>{device.hostname}</TableCell>
                           <TableCell>{device.os_type}</TableCell>
                           <TableCell>{device.ip_address}</TableCell>
+                          <TableCell>{device.ssh_port || '1700'}</TableCell>
                           <TableCell>
                             {device.device_group_id ? (
                               <Chip
@@ -344,7 +346,7 @@ const DevicesPage = () => {
                       ))}
                     {devices.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} align="center">
+                        <TableCell colSpan={9} align="center">
                           Không có thiết bị nào
                         </TableCell>
                       </TableRow>
@@ -476,14 +478,14 @@ const DevicesPage = () => {
 
               <Grid item xs={12}>
                 <TextField
-                  name="password"
-                  label="Mật khẩu"
-                  type="password"
+                  name="ssh_port"
+                  label="SSH Port"
                   fullWidth
                   variant="outlined"
-                  value={formData.password}
+                  value={formData.ssh_port}
                   onChange={handleInputChange}
-                  helperText={dialogMode === 'edit' ? "Để trống nếu không thay đổi mật khẩu" : "Mật khẩu kết nối với thiết bị"}
+                  placeholder="22"
+                  helperText="Port SSH để kết nối với thiết bị (mặc định: 22)"
                   InputProps={{
                     sx: { borderRadius: 1 }
                   }}
