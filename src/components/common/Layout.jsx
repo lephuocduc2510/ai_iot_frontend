@@ -116,7 +116,7 @@ const Layout = () => {
       text: 'Thiết bị',
       icon: <DevicesIcon />,
       path: '/devices',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredRole: [ 'TeamLead'], // Loại bỏ Admin
       requiredPermission: 'view_devices'
     },
     {
@@ -130,14 +130,14 @@ const Layout = () => {
       text: 'Nhóm thiết bị',
       icon: <GroupIcon />,
       path: '/device-groups',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredRole: [ 'TeamLead'], // Loại bỏ Admin
       requiredPermission: 'view_device_groups'
     },
     {
       text: 'Lệnh điều khiển',
       icon: <CodeIcon />,
       path: '/commands',
-      requiredRole: ['Supervisor', 'TeamLead', 'Operator'], // Loại bỏ Admin
+      requiredRole: ['TeamLead', 'Operator'], // Loại bỏ Admin
       requiredPermission: 'view_commands'
     },
     {
@@ -162,21 +162,21 @@ const Layout = () => {
       text: 'Quản lý hồ sơ',
       icon: <AssignmentIcon />,
       path: '/profiles',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredRole: ['TeamLead'], // Loại bỏ Admin
       requiredPermission: 'view_profiles'
     },
     {
       text: 'Lệnh hồ sơ',
       icon: <CodeIcon />,
       path: '/profile-commands',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredRole: ['TeamLead'], // Loại bỏ Admin
       requiredPermission: 'manage_profile_commands'
     },
     {
       text: 'Gán hồ sơ',
       icon: <PersonAddIcon />,
       path: '/profile-operators',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredRole: ['TeamLead'], // Loại bỏ Admin
       requiredPermission: 'assign_profiles'
     }
   ];
