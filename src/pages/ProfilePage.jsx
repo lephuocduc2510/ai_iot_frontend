@@ -209,22 +209,6 @@ const ProfilePage = () => {
                   variant="outlined"
                 />
               </Grid>
-
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Trạng thái"
-                  value={
-                    userDetails?.is_active !== undefined 
-                      ? (userDetails.is_active ? 'Hoạt động' : 'Bị khóa')
-                      : (user?.is_active ? 'Hoạt động' : 'Bị khóa')
-                  }
-                  InputProps={{ readOnly: true }}
-                  variant="outlined"
-                />
-              </Grid>
-
-            
             </Grid>
           )}
         </TabPanel>
