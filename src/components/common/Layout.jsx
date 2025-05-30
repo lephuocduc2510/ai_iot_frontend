@@ -144,14 +144,14 @@ const Layout = () => {
       text: 'Phiên hoạt động',
       icon: <VisibilityIcon />,
       path: '/sessions',
-      requiredRole: ['Admin', 'Supervisor'],
+      requiredRole: ['Supervisor'],
       requiredPermission: 'view_sessions'
     },
     {
       text: 'Lịch sử phiên',
       icon: <HistoryIcon />,
       path: '/session-history',
-      requiredRole: ['Admin', 'Supervisor'],
+      requiredRole: ['Supervisor'],
       requiredPermission: 'view_sessions'
     }
   ];
