@@ -137,7 +137,8 @@ const Layout = () => {
       text: 'Lệnh điều khiển',
       icon: <CodeIcon />,
       path: '/commands',
-      requiredRole: ['TeamLead', 'Operator'], // Loại bỏ Admin
+      // requiredRole: ['TeamLead', 'Operator'], // Loại bỏ Admin
+      requiredRole: ['TeamLead'], // Loại bỏ Admin
       requiredPermission: 'view_commands'
     },
     {
