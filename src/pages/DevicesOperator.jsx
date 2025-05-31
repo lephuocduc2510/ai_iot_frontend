@@ -40,6 +40,7 @@ const getOperatorDevices = async () => {
 
 const DevicesOperator = () => {
   // State
+  const [testCommand, setTestCommand] = useState('ls -la');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const token = localStorage.getItem('access_token') || '';
@@ -63,6 +64,12 @@ const DevicesOperator = () => {
   const searchAddonRef = useRef(null);
   const sessionIdRef = useRef(null);
 
+  // Command buffer để lưu lệnh đang nhập
+  const [interactiveMode, setInteractiveMode] = useState(false);
+
+  useEffect(() => {
+    console.log('Interactive mode changed:', interactiveMode);
+  }, [interactiveMode]);
   // Cleanup cho terminal và socket khi component unmount
   useEffect(() => {
     return () => {
@@ -79,6 +86,48 @@ const DevicesOperator = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [terminalOpen]);
+
+  // Thêm hàm test API riêng biệt, không liên quan đến luồng chính
+  const testAPI = () => {
+    if (!terminalInstance.current || !connectingDevice) return;
+
+    const terminal = terminalInstance.current;
+    terminal.write('\r\n\x1B[1;33m===== TEST API =====\x1B[0m\r\n');
+    terminal.write(`\x1B[1;33mĐang thử API với lệnh: ${testCommand}\x1B[0m\r\n`);
+
+    // Gọi API thực hiện lệnh
+    fetch('http://127.0.0.1:8000/api/v1/operator/execute', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        device_id: connectingDevice.id,
+        command: testCommand
+      })
+    })
+      .then(res => {
+        if (res.ok) {
+          return res.json().then(data => {
+            terminal.write('\r\n\x1B[1;32mAPI trả về thành công:\x1B[0m\r\n');
+            terminal.write(`\x1B[37m${JSON.stringify(data, null, 2)}\x1B[0m\r\n`);
+            terminal.write('\r\n');
+          });
+        } else {
+          return res.json().catch(() => ({ message: 'Lỗi không xác định' }))
+            .then(err => {
+              terminal.write(`\r\n\x1B[1;31mAPI trả về lỗi (${res.status}):\x1B[0m\r\n`);
+              terminal.write(`\x1B[1;31m${err.message || err.detail || JSON.stringify(err)}\x1B[0m\r\n`);
+              terminal.write('\r\n');
+            });
+        }
+      })
+      .catch(err => {
+        terminal.write(`\r\n\x1B[1;31mLỗi kết nối API: ${err.message}\x1B[0m\r\n`);
+        terminal.write('\r\n');
+      });
+  };
 
   // Mutation cho kết nối SSH
   const connectMutation = useMutation(connectToDevice, {
@@ -173,7 +222,9 @@ const DevicesOperator = () => {
         selectionBackground: '#5DA5D533'
       },
       convertEol: true,
-      scrollback: 1000
+      scrollback: 1000,
+      cols: 80,  // Đặt kích thước cố định
+      rows: 24   // cho terminal để nano hiển thị đúng
     });
     const fitAddon = new FitAddon();
     const webLinksAddon = new WebLinksAddon();
@@ -190,35 +241,34 @@ const DevicesOperator = () => {
         `\x1b[1;36mThông tin thiết bị:\x1b[0m\r\n` +
         `Hostname: ${connectingDevice.hostname}\r\n` +
         `IP: ${connectingDevice.ip_address}\r\n` +
-
         `SSH Port: ${connectingDevice.ssh_port || '2001'}\r\n` +
-        `Trạng thái: ${connectingDevice.status === 'Đang hoạt động' ? 'Đang hoạt động' : 'Không hoạt động'}\r\n` +
+        `Trạng thái: ${connectingDevice.status === 'Đang hoạt động' ? 'Đang hoạt động' : 'Đang hoạt động'}\r\n` +
         `Ngày tạo: ${formatDate(connectingDevice.created_at)}\r\n\r\n`
       );
       // Gọi API thực hiện lệnh ls
-      fetch('http://127.0.0.1:8000/api/v1/operator/execute', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          // Nếu có token, thêm Authorization ở đây
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          device_id: connectingDevice.id,
-          command: 'ls'
-        })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            terminal.write(`\x1b[1;32m${data.output}\x1b[0m\r\n`);
-          } else {
-            terminal.write(`\x1b[1;31m${data.message || 'Lỗi khi thực thi lệnh.'}\x1b[0m\r\n`);
-          }
-        })
-        .catch(err => {
-          terminal.write(`\x1b[1;31mLỗi kết nối API: ${err.message}\x1b[0m\r\n`);
-        });
+      // fetch('http://127.0.0.1:8000/api/v1/operator/execute', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     // Nếu có token, thêm Authorization ở đây
+      //     'Authorization': `Bearer ${token}`
+      //   },
+      //   body: JSON.stringify({
+      //     device_id: connectingDevice.id,
+      //     command: 'ls'
+      //   })
+      // })
+      //   .then(res => res.json())
+      //   .then(data => {
+      //     if (data.success) {
+      //       terminal.write(`\x1b[1;32m${data.output}\x1b[0m\r\n`);
+      //     } else {
+      //       terminal.write(`\x1b[1;31m${data.message || 'Lỗi khi thực thi lệnh.'}\x1b[0m\r\n`);
+      //     }
+      //   })
+      //   .catch(err => {
+      //     terminal.write(`\x1b[1;31mLỗi kết nối API: ${err.message}\x1b[0m\r\n`);
+      //   });
     }
     fitAddon.fit();
     terminal.focus();
@@ -227,93 +277,133 @@ const DevicesOperator = () => {
   };
   // Hàm kết nối với socket.io server
   const connectToSocketServer = (terminal) => {
+    // Tạo kết nối socket
     const socket = io('http://localhost:8001', {
       path: '/socket.io',
       query: {
         sessionId: sessionIdRef.current
-      }
+      },
+      reconnection: true,      // Tự động kết nối lại
+      reconnectionAttempts: 5, // Số lần thử kết nối lại
+      reconnectionDelay: 1000  // Khoảng thời gian giữa các lần thử 
     });
     socketRef.current = socket;
 
+    // Xử lý khi kết nối thành công
     socket.on('connect', () => {
+      console.log('Socket connected to server');
       terminal.write('\r\n\x1B[1;32mĐã kết nối tới server.\x1B[0m\r\n');
+
+      // Gửi thông tin SSH
       socket.emit('start_ssh', {
         host: connectingDevice.ip_address,
-        port: connectingDevice.ssh_port || 2001,
+        port: parseInt(connectingDevice.ssh_port || 2001),
         username: sshUsername,
         password: sshPassword
       });
+
+      // Gửi kích thước terminal
+      socket.emit('resize', {
+        cols: terminal.cols,
+        rows: terminal.rows
+      });
     });
 
+    // XỬ LÝ DỮ LIỆU TỪ SERVER
     socket.on('data', (data) => {
       terminal.write(data);
     });
 
+    // Xử lý lỗi kết nối
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      terminal.write(`\r\n\x1B[1;31mLỗi kết nối: ${error}\x1B[0m\r\n`);
+    });
+
+    // Xử lý disconnect và errors
     socket.on('disconnect', () => {
+      console.log('Socket disconnected from server');
       terminal.write('\r\n\x1B[1;31mĐã mất kết nối với server.\x1B[0m\r\n');
+      setInteractiveMode(false);
     });
 
     socket.on('error', (error) => {
+      console.error('Socket error:', error);
       terminal.write(`\r\n\x1B[1;31mLỗi: ${error}\x1B[0m\r\n`);
     });
 
-    // Bộ đệm lệnh
-    let commandBuffer = '';
-
+    // XỬ LÝ DỮ LIỆU TỪ CLIENT (người dùng nhập vào terminal) - ĐƠN GIẢN HÓA
     terminal.onData((data) => {
-      // Nếu là Enter
-      if (data === '\r') {
-        const command = commandBuffer.trim();
-        terminal.write('\r\n'); // xuống dòng
-
-        if (command === 'ls') {
-          // Gọi API thay vì gửi qua SSH
-          fetch('http://127.0.0.1:8000/api/v1/operator/execute', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              device_id: connectingDevice.id,
-              command: command
-            })
-          })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                terminal.write(`\x1b[1;32m${data.output}\x1b[0m\r\n`);
-              } else {
-                terminal.write(`\x1b[1;31m${data.message || 'Lỗi khi thực thi lệnh.'}\x1b[0m\r\n`);
-              }
-            })
-            .catch(err => {
-              terminal.write(`\x1b[1;31mLỗi kết nối API: ${err.message}\x1b[0m\r\n`);
-            });
-        } else {
-          // Gửi lệnh qua SSH như bình thường
-          socket.emit('data', command + '\n');
-        }
-        commandBuffer = '';
-      } else if (data === '\u007f') {
-        // Xử lý Backspace
-        if (commandBuffer.length > 0) {
-          commandBuffer = commandBuffer.slice(0, -1);
-          terminal.write('\b \b');
-        }
-      } else {
-        commandBuffer += data;
-        terminal.write(data);
+      // ĐƠN GIẢN HÓA: Gửi mọi thứ người dùng nhập trực tiếp đến SSH
+      if (socketRef.current) {
+        socketRef.current.emit('data', data);
       }
     });
 
+    // XỬ LÝ RESIZE TERMINAL
     terminal.onResize((size) => {
-      socket.emit('resize', { cols: size.cols, rows: size.rows });
+      if (socketRef.current) {
+        socketRef.current.emit('resize', { cols: size.cols, rows: size.rows });
+      }
     });
-    socket.emit('resize', {
-      cols: terminal.cols,
-      rows: terminal.rows
-    });
+  };
+
+  // Sửa phương thức checkCommandAndExecute
+
+  const checkCommandAndExecute = (command, terminal) => {
+    // Không làm gì nếu lệnh rỗng
+    if (!command.trim()) {
+      console.log('Empty command, not executing');
+      socketRef.current.emit('data', '\r');
+      return;
+    }
+
+    // Xác định nếu là lệnh tương tác
+    const isInteractiveCmd = command.startsWith('nano') ||
+      command.startsWith('vim') ||
+      command.startsWith('top') ||
+      command.startsWith('less') ||
+      command.startsWith('more') ||
+      command.startsWith('vi');
+
+    console.log(`Processing command: ${command} (interactive: ${isInteractiveCmd})`);
+
+    // Kiểm tra qua API
+    fetch('http://127.0.0.1:8000/api/v1/operator/execute', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        device_id: connectingDevice.id,
+        command: command
+      })
+    })
+      .then(async res => {
+        if (res.status === 200) {
+          console.log(`API check successful for ${isInteractiveCmd ? 'interactive' : 'regular'} command`);
+
+          // Nếu là lệnh tương tác, bật chế độ tương tác
+          if (isInteractiveCmd) {
+            console.log('Enabling interactive mode');
+            setInteractiveMode(true);
+
+            // Gửi lệnh qua sự kiện đặc biệt cho lệnh tương tác
+            socketRef.current.emit('interactive_command', command);
+          } else {
+            // Gửi lệnh thông thường
+            socketRef.current.emit('data', command + '\r\n');
+          }
+
+        } else {
+          const data = await res.json();
+          terminal.write(`\x1b[1;31m${data.message || 'Lệnh không hợp lệ hoặc bị từ chối.'}\x1b[0m\r\n`);
+        }
+      })
+      .catch(err => {
+        terminal.write(`\x1b[1;31mLỗi kết nối API: ${err.message}\x1b[0m\r\n`);
+      });
   };
   // Đóng terminal
   const closeTerminal = () => {
@@ -327,6 +417,7 @@ const DevicesOperator = () => {
     }
     setTerminalOpen(false);
     sessionIdRef.current = null;
+    setInteractiveMode(false); // Reset chế độ tương tác
   };
   // Toggle chế độ fullscreen
   const toggleFullscreen = () => {
@@ -644,6 +735,7 @@ const DevicesOperator = () => {
           }
         }}
       >
+        {/* Header */}
         <Box sx={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -671,6 +763,7 @@ const DevicesOperator = () => {
           </Box>
         </Box>
 
+        {/* Terminal */}
         <Box
           sx={{
             flexGrow: 1,
@@ -684,11 +777,44 @@ const DevicesOperator = () => {
             sx={{
               width: '100%',
               height: '100%',
-              minHeight: '300px', // thêm dòng này để chắc chắn có chiều cao
+              minHeight: '300px',
               '& .xterm': { height: '100%' },
               '& .terminal': { height: '100%' }
             }}
           />
+        </Box>
+
+        {/* Footer - Test API */}
+        <Box sx={{
+          p: 1,
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          bgcolor: '#1e1e1e',
+          display: 'flex',
+          alignItems: 'center'
+        }}>
+          <TextField
+            size="small"
+            placeholder="Lệnh để test API"
+            value={testCommand}
+            onChange={(e) => setTestCommand(e.target.value)}
+            sx={{
+              mr: 1,
+              flexGrow: 1,
+              '& .MuiInputBase-root': {
+                color: '#fff',
+                bgcolor: 'rgba(255,255,255,0.05)',
+                borderRadius: 1
+              }
+            }}
+          />
+          <Button
+            variant="contained"
+            size="small"
+            onClick={testAPI}
+            sx={{ borderRadius: 1, textTransform: 'none' }}
+          >
+            Test API
+          </Button>
         </Box>
       </Dialog>
     </>
