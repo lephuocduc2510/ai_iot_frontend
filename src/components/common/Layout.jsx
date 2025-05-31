@@ -23,7 +23,9 @@ import {
   ExpandMore,
   PersonAdd as PersonAddIcon,
   Brightness4,
-  Brightness7
+  Brightness7,
+  Visibility as VisibilityIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -114,7 +116,7 @@ const Layout = () => {
       text: 'Thiết bị',
       icon: <DevicesIcon />,
       path: '/devices',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredRole: [ 'TeamLead'], // Loại bỏ Admin
       requiredPermission: 'view_devices'
     },
     {
@@ -128,39 +130,54 @@ const Layout = () => {
       text: 'Nhóm thiết bị',
       icon: <GroupIcon />,
       path: '/device-groups',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredRole: [ 'TeamLead'], // Loại bỏ Admin
       requiredPermission: 'view_device_groups'
     },
     {
       text: 'Lệnh điều khiển',
       icon: <CodeIcon />,
       path: '/commands',
-      requiredRole: ['Supervisor', 'TeamLead', 'Operator'], // Loại bỏ Admin
+      // requiredRole: ['TeamLead', 'Operator'], // Loại bỏ Admin
+      requiredRole: ['TeamLead'], // Loại bỏ Admin
       requiredPermission: 'view_commands'
+    },
+    {
+      text: 'Phiên hoạt động',
+      icon: <VisibilityIcon />,
+      path: '/sessions',
+      requiredRole: ['Supervisor'],
+      requiredPermission: 'view_sessions'
+    },
+    {
+      text: 'Lịch sử phiên',
+      icon: <HistoryIcon />,
+      path: '/session-history',
+      requiredRole: ['Supervisor'],
+      requiredPermission: 'view_sessions'
     }
   ];
 
   // Submenu cho hồ sơ
   const profileMenuItems = [
+    // {
+    //   text: 'Quản lý hồ sơ',
+    //   icon: <AssignmentIcon />,
+    //   path: '/profiles',
+    //   requiredRole: ['TeamLead'], // Loại bỏ Admin
+    //   requiredPermission: 'view_profiles'
+    // },
     {
-      text: 'Quản lý hồ sơ',
-      icon: <AssignmentIcon />,
-      path: '/profiles',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
-      requiredPermission: 'view_profiles'
-    },
-    {
-      text: 'Lệnh hồ sơ',
+      text: 'Tạo hồ sơ',
       icon: <CodeIcon />,
       path: '/profile-commands',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredRole: ['TeamLead'], // Loại bỏ Admin
       requiredPermission: 'manage_profile_commands'
     },
     {
       text: 'Gán hồ sơ',
       icon: <PersonAddIcon />,
       path: '/profile-operators',
-      requiredRole: ['Supervisor', 'TeamLead'], // Loại bỏ Admin
+      requiredRole: ['TeamLead'], // Loại bỏ Admin
       requiredPermission: 'assign_profiles'
     }
   ];

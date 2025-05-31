@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Container, Box, Typography, Paper, Tabs, Tab, 
   TextField, Button, Alert, CircularProgress,
@@ -7,10 +7,11 @@ import {
 import { 
   Person as PersonIcon, 
   Password as PasswordIcon,
-  VerifiedUser as VerifiedUserIcon
+  VerifiedUser as VerifiedUserIcon,
+  Email as EmailIcon
 } from '@mui/icons-material';
-import { useMutation } from 'react-query';
-import { updatePassword } from '../api/authApi';
+import { useMutation, useQuery } from 'react-query';
+import { updatePassword, getUser } from '../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 import * as Yup from 'yup';
 import { Formik, Form, Field } from 'formik';
@@ -51,19 +52,38 @@ function TabPanel(props) {
 const ProfilePage = () => {
   const { user } = useAuth();
   const [tabValue, setTabValue] = useState(0);
+  
+  // Lấy thông tin chi tiết người dùng từ API
+  const { data: userDetails, isLoading, error } = useQuery(
+    ['user', user?.id],
+    () => getUser(user?.id),
+    {
+      enabled: !!user?.id, // Chỉ gọi API khi có user.id
+      refetchOnWindowFocus: false
+    }
+  );
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
   const passwordUpdateMutation = useMutation(
-    (data) => updatePassword(data.oldPassword, data.newPassword),
-    {
-      onSuccess: () => {
-        // Xử lý khi cập nhật thành công
-      }
-    }
+    (data) => updatePassword(data.oldPassword, data.newPassword)
   );
+
+  // Tạo avatar từ tên người dùng
+  const getAvatarText = () => {
+    if (userDetails?.full_name) {
+      return userDetails.full_name.charAt(0).toUpperCase();
+    } 
+    if (userDetails?.username) {
+      return userDetails.username.charAt(0).toUpperCase();
+    } 
+    if (user?.username) {
+      return user.username.charAt(0).toUpperCase();
+    }
+    return 'U';
+  };
 
   return (
     <Container maxWidth="lg">
@@ -85,7 +105,7 @@ const ProfilePage = () => {
               fontSize: '2.5rem'
             }}
           >
-            {user?.username?.charAt(0).toUpperCase() || 'U'}
+            {getAvatarText()}
           </Avatar>
           <Box>
             <Typography variant="h4" fontWeight="bold">
@@ -94,7 +114,7 @@ const ProfilePage = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
               <VerifiedUserIcon sx={{ mr: 1 }} />
               <Typography variant="subtitle1">
-                {user?.role || 'User'}
+                {userDetails?.role || user?.role || 'User'}
               </Typography>
             </Box>
           </Box>
@@ -121,54 +141,76 @@ const ProfilePage = () => {
         </Box>
 
         <TabPanel value={tabValue} index={0}>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Thông tin tài khoản
-              </Typography>
-              <Divider sx={{ mb: 3 }} />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Tên đăng nhập"
-                value={user?.username || ''}
-                InputProps={{ readOnly: true }}
-                variant="outlined"
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Email"
-                value={user?.email || ''}
-                InputProps={{ readOnly: true }}
-                variant="outlined"
-              />
-            </Grid>
+          {isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ my: 2 }}>
+              Không thể tải thông tin người dùng: {error.message}
+            </Alert>
+          ) : (
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  Thông tin tài khoản
+                </Typography>
+                <Divider sx={{ mb: 3 }} />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Tên đăng nhập"
+                  value={userDetails?.username || user?.username || ''}
+                  InputProps={{ 
+                    readOnly: true,
+                    startAdornment: (
+                      <PersonIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    )
+                  }}
+                  variant="outlined"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  value={userDetails?.email || user?.email || ''}
+                  InputProps={{ 
+                    readOnly: true,
+                    startAdornment: (
+                      <EmailIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                    )
+                  }}
+                  variant="outlined"
+                />
+              </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Vai trò"
-                value={user?.role || ''}
-                InputProps={{ readOnly: true }}
-                variant="outlined"
-              />
-            </Grid>
+              {(userDetails?.full_name || user?.full_name) && (
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Họ và tên"
+                    value={userDetails?.full_name || user?.full_name || ''}
+                    InputProps={{ readOnly: true }}
+                    variant="outlined"
+                  />
+                </Grid>
+              )}
 
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Trạng thái"
-                value={user?.is_active ? 'Hoạt động' : 'Bị khóa'}
-                InputProps={{ readOnly: true }}
-                variant="outlined"
-              />
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Vai trò"
+                  value={userDetails?.role || user?.role || ''}
+                  InputProps={{ readOnly: true }}
+                  variant="outlined"
+                />
+              </Grid>
             </Grid>
-          </Grid>
+          )}
         </TabPanel>
 
         <TabPanel value={tabValue} index={1}>

@@ -212,19 +212,6 @@ const CommandsPage = () => {
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'success':
-        return 'Thành công';
-      case 'failed':
-        return 'Thất bại';
-      case 'scheduled':
-        return 'Đã lên lịch';
-      default:
-        return 'Đang chờ';
-    }
-  };
-
   return (
     <>
       <Box sx={{ p: 3 }}>
@@ -267,11 +254,10 @@ const CommandsPage = () => {
                     <TableRow>
                       <TableCell>ID</TableCell>
                       {/* Đã xóa cột "Tên lệnh" */}
-                      <TableCell>Loại mục tiêu</TableCell>
-                      <TableCell>Mục tiêu</TableCell>
+                      {/* <TableCell>Loại mục tiêu</TableCell>
+                      <TableCell>Mục tiêu</TableCell> */}
                       <TableCell>Lệnh</TableCell>
-                      <TableCell>Trạng thái</TableCell>
-                      <TableCell>Thời gian thực thi</TableCell>
+                      {/* <TableCell>Thời gian thực thi</TableCell> */}
                       <TableCell align="right">Thao tác</TableCell>
                     </TableRow>
                   </TableHead>
@@ -286,11 +272,10 @@ const CommandsPage = () => {
                         return (
                           <TableRow key={command.id}>
                             <TableCell>{command.id}</TableCell>
-                            {/* Đã xóa dòng hiển thị tên lệnh */}
-                            <TableCell>
+                            {/* <TableCell>
                               {command.command_type === 'single' ? 'Thiết bị' : 'Nhóm thiết bị'}
                             </TableCell>
-                            <TableCell>{targetName}</TableCell>
+                            <TableCell>{targetName}</TableCell> */}
                             <TableCell>
                               <Tooltip title={command.parameters ? `Tham số: ${command.parameters}` : 'Không có tham số'}>
                                 <Typography variant="body2" noWrap sx={{ maxWidth: 200 }}>
@@ -298,25 +283,10 @@ const CommandsPage = () => {
                                 </Typography>
                               </Tooltip>
                             </TableCell>
-                            <TableCell>
-                              <Tooltip title={getStatusText(command.status)}>
-                                <Chip
-                                  icon={getStatusIcon(command.status)}
-                                  label={getStatusText(command.status)}
-                                  color={
-                                    command.status === 'success' ? 'success' :
-                                      command.status === 'failed' ? 'error' :
-                                        command.status === 'scheduled' ? 'info' : 'warning'
-                                  }
-                                  variant="outlined"
-                                  size="small"
-                                />
-                              </Tooltip>
-                            </TableCell>
-                            <TableCell>
+                            {/* <TableCell>
                               {command.executed_at ? new Date(command.executed_at).toLocaleString() :
                                 command.scheduled_time ? new Date(command.scheduled_time).toLocaleString() : 'N/A'}
-                            </TableCell>
+                            </TableCell> */}
                             <TableCell align="right">
                               <Stack direction="row" spacing={1} justifyContent="flex-end">
                                 <IconButton
@@ -413,7 +383,7 @@ const CommandsPage = () => {
               }}
             />
 
-            <TextField
+            {/* <TextField
               name="parameters"
               label="Tham số (không bắt buộc)"
               type="text"
@@ -426,10 +396,10 @@ const CommandsPage = () => {
               InputProps={{
                 sx: { borderRadius: 1 }
               }}
-            />
+            /> */}
           </Box>
 
-          <Box sx={{ mb: 3 }}>
+          {/* <Box sx={{ mb: 3 }}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary">
               Mục tiêu
             </Typography>
@@ -519,7 +489,7 @@ const CommandsPage = () => {
                 sx: { borderRadius: 1 }
               }}
             />
-          </Box>
+          </Box> */}
         </DialogContent>
         <DialogActions sx={{
           borderTop: '1px solid rgba(0, 0, 0, 0.12)',

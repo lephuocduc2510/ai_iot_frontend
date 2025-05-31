@@ -136,18 +136,16 @@ const DeviceGroupsPage = () => {
   };
 
   const handleDeviceToggle = (deviceId) => {
-    const currentDevices = [...formData.devices];
-    const currentIndex = currentDevices.indexOf(deviceId);
-    
-    if (currentIndex === -1) {
-      currentDevices.push(deviceId);
-    } else {
-      currentDevices.splice(currentIndex, 1);
-    }
-
-    setFormData({
-      ...formData,
-      devices: currentDevices
+    setFormData((prevFormData) => {
+      const isSelected = prevFormData.devices.includes(deviceId);
+      const updatedDevices = isSelected
+        ? prevFormData.devices.filter((id) => id !== deviceId) // Bỏ thiết bị nếu đã được chọn
+        : [...prevFormData.devices, deviceId]; // Thêm thiết bị nếu chưa được chọn
+  
+      return {
+        ...prevFormData,
+        devices: updatedDevices, // Cập nhật danh sách thiết bị
+      };
     });
   };
 
@@ -159,7 +157,8 @@ const DeviceGroupsPage = () => {
 
     if (dialogMode === 'add') {
       createMutation.mutate({
-        name: formData.name
+        name: formData.name,
+        id_devices: formData.devices
       }, {
         onSuccess: (response) => {
           // Sau khi tạo nhóm thành công, thêm các thiết bị vào nhóm
@@ -174,7 +173,8 @@ const DeviceGroupsPage = () => {
     } else {
       updateMutation.mutate({
         id: selectedGroup.id,
-        name: formData.name
+        name: formData.name,
+        id_devices: formData.devices
       }, {
         onSuccess: () => {
           // Sau khi cập nhật nhóm thành công, cập nhật danh sách thiết bị
