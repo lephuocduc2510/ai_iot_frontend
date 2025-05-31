@@ -158,13 +158,13 @@ const Layout = () => {
 
   // Submenu cho hồ sơ
   const profileMenuItems = [
-    {
-      text: 'Quản lý hồ sơ',
-      icon: <AssignmentIcon />,
-      path: '/profiles',
-      requiredRole: ['TeamLead'], // Loại bỏ Admin
-      requiredPermission: 'view_profiles'
-    },
+    // {
+    //   text: 'Quản lý hồ sơ',
+    //   icon: <AssignmentIcon />,
+    //   path: '/profiles',
+    //   requiredRole: ['TeamLead'], // Loại bỏ Admin
+    //   requiredPermission: 'view_profiles'
+    // },
     {
       text: 'Tạo hồ sơ',
       icon: <CodeIcon />,
